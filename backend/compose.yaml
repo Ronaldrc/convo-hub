@@ -1,0 +1,6 @@
+services:
+  db:
+    image: postgres:16.3
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: 
