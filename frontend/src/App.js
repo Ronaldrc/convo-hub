@@ -1,23 +1,66 @@
-import logo from './logo.svg';
 import './App.css';
+import { io } from 'socket.io-client';
+import { useEffect, useState } from 'react';
+import WebSocketCall from './components/WebSocketCall';
+import HttpCall from './components/HttpCall'
+
 
 function App() {
+  const [socketInstance, setSocketInstance] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [buttonStatus, setButtonStatus] = useState(false);
+
+  const handleClick = () => {
+    if (buttonStatus === false) {
+      setButtonStatus(true);
+    } else {
+      setButtonStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    if (buttonStatus === true) {
+      const socket = io({
+        transports: ["websocket"],
+        cors: {
+          credentials: true
+        }
+      })
+      
+      setSocketInstance(socket);
+      
+      socket.on("connect", (data) => {
+        console.log(data);
+      });
+
+      setLoading(false);
+      
+      socket.on("disconnect", (data) => {
+        console.log(data);
+      });
+      
+      return function cleanup() {
+        socket.disconnect();
+      };
+    }
+  }, [buttonStatus]);
+  
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>React/Flask App + socket.io</h1>
+      <div className="line">
+        <HttpCall/>
+      </div>
+      {!buttonStatus ? (
+        <button onClick={handleClick}>turn chat on</button>
+      ) : (
+        <>
+          <button onClick={handleClick}>turn chat off</button>
+          <div className="line">
+            {!loading && <WebSocketCall socket={socketInstance}/>}
+          </div>
+        </>
+      )}
     </div>
   );
 }

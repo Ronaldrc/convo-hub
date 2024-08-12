@@ -3,16 +3,21 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO, emit
 
 load_dotenv(".env")
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
-CORS(app)
+CORS(app, resources={r"/*":{"origins":"*"}})
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 db = SQLAlchemy(app)
 
-# Define model
+####################
+## Define model then create tables
+####################
+
 class UserMessage(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
@@ -28,7 +33,6 @@ class UserMessage(db.Model):
             'time_message_sent' : self.time_message_sent
         }
 
-# Create all tables
 with app.app_context():
     db.create_all()
     
@@ -77,4 +81,44 @@ def get_username_message_time():
     except Exception as e:
         return(f"Failed to get username, message, and time sent - {e}")
 
-app.run(host=os.getenv('HOST_IP'), debug=True)
+## Check if the username the person typed exists or not
+##      error if username already exists
+
+## Get all usernames, time sent, and messages from database
+
+####################
+## Define socket-related routes
+####################
+@app.route('/http-call', methods=['GET'])
+def http_call():
+    return jsonify({
+        'data':'This text was fetched using an HTTP call to server on render'
+    })
+
+@socketio.on('connect')
+def connect():
+    print(request.sid)
+    print("\tclient has connected")
+    emit("connected", {"data": f"id: {request.sid} is connected"})
+
+@socketio.on('message')
+def handle_message(data):
+    print("data from the front end: ", str(data))
+    emit("data", {
+        'data': data,
+        'id': request.sid
+    }, broadcast=True)
+
+@socketio.on('disconnect')
+def disconnected():
+    print("\tuser disconnected")
+    emit("disconnect", f"user{request.sid} disconnected", broadcast=True)
+
+@socketio.on_error_default
+def default_error_handler(e):
+    print(request.event["message"]) # "my error event"
+    print(request.event["args"])    # (data,)
+
+# app.run(host=os.getenv('HOST_IP'), debug=True)
+if __name__ == '__main__':
+    socketio.run(app, host=os.getenv('HOST_IP'))

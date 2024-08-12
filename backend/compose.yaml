@@ -11,6 +11,6 @@ services:
       - "5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/convo-hub/data
- 
+
 volumes:
   pgdata:

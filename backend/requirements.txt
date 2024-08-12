@@ -3,3 +3,6 @@ Flask-SQLAlchemy
 Flask
 Flask-CORS
 psycopg2
+flask-socketio
+gunicorn
+gevent
