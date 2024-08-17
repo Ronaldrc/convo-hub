@@ -36,3 +36,16 @@
     transform: rotate(360deg);
   }
 }
+
+.title {
+  color: red;
+  font-size: 40px;
+}
+
+button.valid {
+  color: rgb(3, 83, 255);
+}
+
+form.username {
+  
+}
