@@ -2,13 +2,13 @@ import './App.css';
 import { io } from 'socket.io-client';
 import { useEffect, useState } from 'react';
 import WebSocketCall from './components/WebSocketCall';
-import HttpCall from './components/HttpCall'
-
+import axios from 'axios'
 
 function App() {
   const [socketInstance, setSocketInstance] = useState("");
   const [loading, setLoading] = useState(true);
   const [buttonStatus, setButtonStatus] = useState(false);
+  const [isValidUsername, setValidUsername] = useState(false);
 
   const handleClick = () => {
     if (buttonStatus === false) {
@@ -17,6 +17,15 @@ function App() {
       setButtonStatus(false);
     }
   };
+
+  const handleSubmit = () => {
+    // send api request
+    // check if username was used before
+    // axios.post('/api/')
+    // if () {
+
+    // }
+  }
 
   useEffect(() => {
     if (buttonStatus === true) {
@@ -47,12 +56,16 @@ function App() {
   
   return (
     <div className="App">
-      <h1>React/Flask App + socket.io</h1>
-      <div className="line">
-        <HttpCall/>
-      </div>
+      {/* Prompt and validate username */}
+      <div className="title">Chat.io</div>
+      <div className="line"></div>
+      <form onSubmit={handleSubmit} className="username">
+        <input type="text" name="username" className="username" placeholder="username"/>
+        <button type="submit" className="valid">Check username</button>
+      </form>
+       {/* Chat box */}
       {!buttonStatus ? (
-        <button onClick={handleClick}>turn chat on</button>
+        <button type="submit" className="valid">Check username</button>
       ) : (
         <>
           <button onClick={handleClick}>turn chat off</button>

@@ -33,7 +33,7 @@ function WebSocketCall({ socket }) {
         <h2>WebSocket Communication</h2>
         <input type="text" value={message} onChange={handleText}/>
         <button onClick={handleSubmit}>submit</button>
-        <ul>
+        <ul className="user-messages">
             {messages.map((message, index) => {
                 return <li key={index}>{message}</li>
             })}
