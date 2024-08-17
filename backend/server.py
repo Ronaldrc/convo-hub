@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
+from datetime import datetime
 
 load_dotenv(".env")
 
@@ -15,13 +16,23 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 db = SQLAlchemy(app)
 
 ####################
-## Define model then create tables
+## Define tables
 ####################
+class Username(db.Model):
+    __tablename__ = 'username'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(40), unique=True, nullable=False)
+
+    def json(self):
+        return {
+            'id': self.id,
+            'username' : self.username
+        }
 
 class UserMessage(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(40))
+    username = db.Column(db.String(40), nullable=False)
     message = db.Column(db.String(400), nullable=False)
     time_message_sent = db.Column(db.DateTime(timezone=True), nullable=False)
 
@@ -32,6 +43,10 @@ class UserMessage(db.Model):
             'message' : self.message,
             'time_message_sent' : self.time_message_sent
         }
+
+####################
+## Create tables
+####################
 
 with app.app_context():
     db.create_all()
@@ -47,25 +62,44 @@ def test():
     except Exception as e:
         return(f"FAILED test api route - {e}", 500)
     
-@app.route('/api/test', methods=['POST'])
+@app.route('/api/username-message-time', methods=['POST'])
 def post_username_message_time():
     try:
         data = request.get_json()
         new_user = UserMessage(
             username = data['username'],
             message = data['message'],
-            time_message_sent = ['time_message_sent'],
+            time_message_sent = data['time_message_sent']
         )
         db.session.add(new_user)
         db.session.commit()
         return jsonify({
-            'new_user' : new_user,
+            'new_user' : new_user.json(),
             'message' : 'success'
         }, 200)
     except Exception as e:
         return(f"Failed to post username, message, and time - {e}", 500)
+    
+# @app.route('/api/username-message-time/isoformat', methods=['POST'])
+# def post_username_message_time():
+#     try:
+#         data = request.get_json()
+#         # time_message_send = datetime.fromisoformat()
+#         new_user = UserMessage(
+#             username = data['username'],
+#             message = data['message'],
+#             time_message_sent = data['time_message_sent'],
+#         )
+#         db.session.add(new_user)
+#         db.session.commit()
+#         return jsonify({
+#             'new_user' : new_user,
+#             'message' : 'success'
+#         }, 200)
+#     except Exception as e:
+#         return(f"Failed to post username, message, and time - {e}", 500)
 
-@app.route('/api/', methods=['GET'])
+@app.route('/api/username/kingjames', methods=['GET'])
 def get_username_message_time():
     try:
         response = db.Query.filter(UserMessage.username == 'kingjames').all()
@@ -74,12 +108,30 @@ def get_username_message_time():
                 'get_username_message' : 'successfully received',
                 'response' : response
             }, 200)
-        if not response:
+        if response is None:
             return jsonify({
                 'get_username_message' : 'no username found'
             }, 200)
     except Exception as e:
         return(f"Failed to get username, message, and time sent - {e}")
+    
+# Check if username was seen before
+#   username is retrieved from form
+@app.route('/api/username/exists', methods=['POST'])
+def does_username_exist():
+    username = request.form.get('username')
+    try:
+        response = db.Query.filter(UserMessage.username == username).first()
+        if response:
+            return jsonify({
+                'does_username_exist' : True
+            }, 200)
+        if response is None:
+            return jsonify({
+                'does_username_exist' : False
+            }, 200)
+    except Exception as e:
+        return(f"Failed to check if username exists - {e}")
 
 ## Check if the username the person typed exists or not
 ##      error if username already exists
@@ -89,12 +141,6 @@ def get_username_message_time():
 ####################
 ## Define socket-related routes
 ####################
-@app.route('/http-call', methods=['GET'])
-def http_call():
-    return jsonify({
-        'data':'This text was fetched using an HTTP call to server on render'
-    })
-
 @socketio.on('connect')
 def connect():
     print(request.sid)
@@ -121,4 +167,4 @@ def default_error_handler(e):
 
 # app.run(host=os.getenv('HOST_IP'), debug=True)
 if __name__ == '__main__':
-    socketio.run(app, host=os.getenv('HOST_IP'))
+    socketio.run(app, host=os.getenv('HOST_IP'), debug=True)
