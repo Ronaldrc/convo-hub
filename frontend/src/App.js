@@ -3,12 +3,16 @@ import { io } from 'socket.io-client';
 import { useEffect, useState } from 'react';
 import WebSocketCall from './components/WebSocketCall';
 import HttpCall from './components/HttpCall'
+import React from 'react';
+import './App.css';
 
 
 function App() {
   const [socketInstance, setSocketInstance] = useState("");
   const [loading, setLoading] = useState(true);
   const [buttonStatus, setButtonStatus] = useState(false);
+  const [text, setText] = useState(""); // State to store the textbox content
+  const [smallText, setSmallText] = useState(""); // State for the small textbox
 
   const handleClick = () => {
     if (buttonStatus === false) {
@@ -47,8 +51,21 @@ function App() {
   
   return (
     <div className="App">
-      <h1>React/Flask App + socket.io</h1>
+      <h1>Chat.io</h1>
       <div className="line">
+      <textarea
+        className="textbox"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Type your text here..."
+      ></textarea>
+
+<textarea
+        className="smallrectangle"
+        value={smallText}
+        onChange={(e) => setSmallText(e.target.value)}
+        placeholder="Type in the small textbox..."
+      ></textarea>
         <HttpCall/>
       </div>
       {!buttonStatus ? (
@@ -61,6 +78,7 @@ function App() {
           </div>
         </>
       )}
+
     </div>
   );
 }

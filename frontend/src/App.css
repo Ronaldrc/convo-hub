@@ -1,3 +1,4 @@
+
 .App {
   text-align: center;
 }
@@ -35,4 +36,42 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.smallrectangle {
+  width: 1400px;       /* Width of the small textbox */
+  height: 100px;       /* Height of the small textbox */
+  background-color: #ebe6e5; /* Background color */
+  border: 6px solid #1102dc; /* Blue border */
+  border-radius: 20px; /* Rounded corners */
+  margin: 10px auto;   /* Center the textbox */
+  padding: 10px;       /* Padding inside the box */
+  box-sizing: border-box; /* Ensure padding doesn't affect size */
+  font-size: 16px;     /* Font size for text input */
+  color: #333;         /* Text color */
+  resize: none;        /* Disable resizing */
+  overflow-y: auto;    /* Scrollable if content overflows */
+  outline: none;       /* Remove default focus outline */
+}
+.textbox {
+  width: 1400px;       /* Increase the width */
+  height: 400px;       /* Increase the height */
+  background-color: #ebe6e5; /* Set the background color */
+  border: 6px solid #e80c0c; /* Thicker border */
+  border-radius: 20px; /* Add rounded corners */
+  margin: 10px auto;   /* Center the textbox */
+  padding: 20px;       /* Add padding inside the box */
+  box-sizing: border-box; /* Ensure padding doesn't affect size */
+  font-size: 16px;     /* Font size for text input */
+  color: #333;         /* Text color */
+  resize: none;        /* Disable resizing (optional) */
+  overflow-y: auto;    /* Enable scrolling if content overflows */
+  outline: none;       /* Remove default focus outline */
+}
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+
+  background: rgba(4, 88, 32, 0.901);
+  background: linear-gradient(90deg, rgb(81, 163, 112) 0%, rgb(50, 109, 57) 100%);
 }
