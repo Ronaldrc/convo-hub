@@ -10,14 +10,15 @@ load_dotenv(".env")
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
-CORS(app, resources={r"/*":{"origins":"*"}})
-socketio = SocketIO(app, cors_allowed_origins="*")
+CORS(app, resources={r"/*":{"origins": os.getenv('PUBLIC_URL')}})
+socketio = SocketIO(app, cors_allowed_origins=os.getenv('PUBLIC_URL'))
 
 db = SQLAlchemy(app)
 
 ####################
 ## Define tables
 ####################
+
 class Username(db.Model):
     __tablename__ = 'username'
     id = db.Column(db.Integer, primary_key=True)
@@ -61,6 +62,22 @@ def test():
         return("SUCCESS testing api route!", 200)
     except Exception as e:
         return(f"FAILED test api route - {e}", 500)
+
+# Insert new username into 'user' table
+@app.route('/api/username/new', methods=['POST'])
+def post_username():
+    try:
+        data = request.get_json()
+        new_user = Username(
+            username = data['new_user']
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({
+            'new_user' : data['new_user'],
+        }, 200)
+    except Exception as e:
+        return(f"Failed to post username - {e}", 500)
     
 @app.route('/api/username-message-time', methods=['POST'])
 def post_username_message_time():
@@ -79,49 +96,29 @@ def post_username_message_time():
         }, 200)
     except Exception as e:
         return(f"Failed to post username, message, and time - {e}", 500)
-    
-# @app.route('/api/username-message-time/isoformat', methods=['POST'])
-# def post_username_message_time():
-#     try:
-#         data = request.get_json()
-#         # time_message_send = datetime.fromisoformat()
-#         new_user = UserMessage(
-#             username = data['username'],
-#             message = data['message'],
-#             time_message_sent = data['time_message_sent'],
-#         )
-#         db.session.add(new_user)
-#         db.session.commit()
-#         return jsonify({
-#             'new_user' : new_user,
-#             'message' : 'success'
-#         }, 200)
-#     except Exception as e:
-#         return(f"Failed to post username, message, and time - {e}", 500)
 
-@app.route('/api/username/kingjames', methods=['GET'])
-def get_username_message_time():
+# Retrieve last 10 usernames, messages, and time sent
+@app.route('/api/get/ten-messages', methods=['GET'])
+def get_ten_messages():
     try:
-        response = db.Query.filter(UserMessage.username == 'kingjames').all()
-        if response:
+        response = db.Query.order_by(UserMessage.time_message_sent.desc()).limit(10)
+        if response is not None:
             return jsonify({
-                'get_username_message' : 'successfully received',
-                'response' : response
-            }, 200)
-        if response is None:
-            return jsonify({
-                'get_username_message' : 'no username found'
-            }, 200)
+                'get_ten_messages' : 'success',
+                'data' : response.json()
+            })
     except Exception as e:
-        return(f"Failed to get username, message, and time sent - {e}")
+        return jsonify({
+            'get_ten_messages' : 'failed',
+            'error' : e
+        })
     
 # Check if username was seen before
 #   username is retrieved from form
-@app.route('/api/username/exists', methods=['POST'])
-def does_username_exist():
-    username = request.form.get('username')
+@app.route('/api/username/exists/<username>', methods=['GET'])
+def does_username_exist(username):
     try:
-        response = db.Query.filter(UserMessage.username == username).first()
+        response = Username.query.filter(Username.username == username).first()
         if response:
             return jsonify({
                 'does_username_exist' : True
@@ -132,28 +129,30 @@ def does_username_exist():
             }, 200)
     except Exception as e:
         return(f"Failed to check if username exists - {e}")
-
-## Check if the username the person typed exists or not
-##      error if username already exists
-
-## Get all usernames, time sent, and messages from database
-
+    
 ####################
 ## Define socket-related routes
 ####################
+
 @socketio.on('connect')
 def connect():
-    print(request.sid)
-    print("\tclient has connected")
+    print(f"\t {request.sid} client has connected")
     emit("connected", {"data": f"id: {request.sid} is connected"})
 
-@socketio.on('message')
+# data contains message and username
+@socketio.on('data')
 def handle_message(data):
-    print("data from the front end: ", str(data))
+    print(f"Username '{data['username']}' said '{data['message']}'")
     emit("data", {
-        'data': data,
-        'id': request.sid
+        'message': data['message'],
+        'username': data['username']
     }, broadcast=True)
+
+@socketio.on('new_username')
+def new_username(username):
+    print(f"\tnew username - {username}")
+    emit("new_username", 
+         {f"new username made" : {username}}, broadcast=True)
 
 @socketio.on('disconnect')
 def disconnected():
