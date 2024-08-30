@@ -14,15 +14,13 @@ function App() {
     const new_username = e.target[0].value;
     // check if username was used before
     try {
-      const response = await axios.get(`https://convo-hub.duckdns.org/api/username/exists/${new_username}`)
+      const response = await axios.get(`http://192.168.1.121:5000/api/username/exists/${new_username}`)
         .then( function (response) {
           console.log(response['data']);
             if (response['data'][0]['does_username_exist'] === false) {
               // Insert new username into 'user' table
               insertUsername(new_username);
               setUsername(new_username);
-              // send new username to server
-              // socketInstance.emit("new_username", username);
               console.log("My username is now - ", new_username);
             } else {
               // Username exists already
@@ -40,7 +38,7 @@ function App() {
 
   const insertUsername = async (new_user) => {
     // Insert new username into 'user' table
-    await axios.post(`https://convo-hub.duckdns.org/api/username/new`, {"new_user" : new_user})
+    await axios.post(`http://192.168.1.121:5000/api/username/new`, {"new_user" : new_user})
       .then(function () {
         setValidUsername(true);
       })
@@ -50,8 +48,8 @@ function App() {
   }
 
   useEffect(() => {
-    const socket = io();  // For testing, using local_ip:PORT, else leave blank
-    
+    const socket = io("http://192.168.1.121:5000") ;  // For testing, using local_ip:PORT, else leave blank
+
     setSocketInstance(socket);
     
     socket.on("connect", (data) => {
@@ -69,8 +67,8 @@ function App() {
   
   return (
     <div className="App">
-      {/* Prompt and validate username */}
       <h1>Chat.io</h1>
+      {/* Prompt and validate username */}
       {(() => {
         if (!isValidUsername) {
           return (
@@ -79,7 +77,7 @@ function App() {
               <button type="submit" className="valid">Check username</button>
             </form>
           )
-        } else if (isValidUsername && socketInstance && username != "") {
+        } else if (isValidUsername && socketInstance && username !== "") {
           return (
             <div>
               <WebSocketCall socket={socketInstance} currentUsername={username}/>
