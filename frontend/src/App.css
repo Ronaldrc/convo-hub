@@ -4,6 +4,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100dvh;
 }
 
 .App-logo {
@@ -48,10 +49,14 @@
 
 button.valid {
   color: rgb(3, 83, 255);
+  margin: 10px;
 }
 
 form.username {
-  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .smallrectangle {
