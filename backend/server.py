@@ -4,14 +4,13 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
-from datetime import datetime
 
 load_dotenv(".env")
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
-CORS(app, resources={r"/*":{"origins": os.getenv('PUBLIC_URL')}})
-socketio = SocketIO(app, cors_allowed_origins=os.getenv('PUBLIC_URL'))
+CORS(app, resources={r"/*":{"origins": "*"}})
+socketio = SocketIO(app, cors_allowed_origins=["http://192.168.1.121:3001"])
 
 db = SQLAlchemy(app)
 
@@ -83,10 +82,11 @@ def post_username():
 def post_username_message_time():
     try:
         data = request.get_json()
+        print(data)
         new_user = UserMessage(
-            username = data['username'],
-            message = data['message'],
-            time_message_sent = data['time_message_sent']
+            username = data['data']['username'],
+            message = data['data']['message'],
+            time_message_sent = data['data']['time_message_sent']
         )
         db.session.add(new_user)
         db.session.commit()
