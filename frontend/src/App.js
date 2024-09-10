@@ -8,26 +8,24 @@ function App() {
   const [socketInstance, setSocketInstance] = useState("");
   const [isValidUsername, setValidUsername] = useState(false);
   const [username, setUsername] = useState("");
+  const [userCount, setUserCount] = useState(0);
 
   const sendUsername = async (e) => {
     e.preventDefault();
     const new_username = e.target[0].value;
     // check if username was used before
     try {
-      const response = await axios.get(`http://192.168.1.121:5000/api/username/exists/${new_username}`)
+      const response = await axios.get(`https://convo-hub.duckdns.org/api/username/exists/${new_username}`)   // Update URL
         .then( function (response) {
-          console.log(response['data']);
-            if (response['data'][0]['does_username_exist'] === false) {
-              // Insert new username into 'user' table
-              insertUsername(new_username);
-              setUsername(new_username);
-              console.log("My username is now - ", new_username);
-            } else {
-              // Username exists already
-              console.log("Username already exists - ", new_username);
-              setValidUsername(false);
-            }
-          })
+          if (response['data'][0]['does_username_exist'] === false) {
+            // Insert new username into 'user' table
+            insertUsername(new_username);
+            setUsername(new_username);
+          } else {
+            // Username exists already
+            setValidUsername(false);
+          }
+        })
         .catch(function (e) {
           console.log(e);
         });
@@ -38,7 +36,7 @@ function App() {
 
   const insertUsername = async (new_user) => {
     // Insert new username into 'user' table
-    await axios.post(`http://192.168.1.121:5000/api/username/new`, {"new_user" : new_user})
+    await axios.post(`https://convo-hub.duckdns.org/api/username/new`, {"new_user" : new_user}) // Update URL
       .then(function () {
         setValidUsername(true);
       })
@@ -48,16 +46,16 @@ function App() {
   }
 
   useEffect(() => {
-    const socket = io("http://192.168.1.121:5000") ;  // For testing, using local_ip:PORT, else leave blank
+    const socket = io() ;  // For testing, using local_ip:PORT, else leave blank
 
     setSocketInstance(socket);
-    
-    socket.on("connect", (data) => {
-      console.log(data);
+
+    socket.on("connected", (data) => {
+      setUserCount(data['user_count']);
     });
-    
-    socket.on("disconnect", (data) => {
-      console.log(data);
+
+    socket.off("disconnected", (data) => {
+      setUserCount(data['user_count']);
     });
     
     return function cleanup() {
@@ -67,28 +65,31 @@ function App() {
   
   return (
     <div className="App">
-      <h1>Chat.io</h1>
-      {/* Prompt and validate username */}
-      {(() => {
-        if (!isValidUsername) {
-          return (
-            <form onSubmit={sendUsername} className="username">
-              <input type="text" name="username" className="username" placeholder="Enter a username"/>
-              <button type="submit" className="valid">Check username</button>
-            </form>
-          )
-        } else if (isValidUsername && socketInstance && username !== "") {
-          return (
-            <div>
-              <WebSocketCall socket={socketInstance} currentUsername={username}/>
-            </div>
-          )
-        } else {
-          return (
-            <h2>Loading.... please wait a moment</h2>
-          )
-        }
-      })()}
+      <h1 className="title">Chat.io</h1>
+        {/* Prompt and validate username */}
+        {(() => {
+          if (!isValidUsername) {
+            return (
+              <div className="login-box">
+                <h2>Welcome</h2>
+                <form onSubmit={sendUsername} className="username">
+                  <input type="text" name="username" className="username" placeholder="Enter a username"/>
+                  <button type="submit" className="valid">Check username</button>
+                </form>
+              </div>
+            )
+          } else if (isValidUsername && socketInstance && username !== "") {
+            return (
+              <div>
+                <WebSocketCall socket={socketInstance} currentUsername={username} numberOfUsers={userCount}/>
+              </div>
+            )
+          } else {
+            return (
+              <h2>Loading.... please wait a moment</h2>
+            )
+          }
+        })()}
     </div>
   );
 }
