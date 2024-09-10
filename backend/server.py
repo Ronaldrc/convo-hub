@@ -9,10 +9,13 @@ load_dotenv(".env")
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
-CORS(app, resources={r"/*":{"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins=["http://192.168.1.121:3001"])
+CORS(app, resources={r"/*":{"origins": os.getenv("PUBLIC_URL")}})
+socketio = SocketIO(app, cors_allowed_origins=[os.getenv("PUBLIC_URL")])
 
 db = SQLAlchemy(app)
+
+# Track number of connected clients
+clients = 0
 
 ####################
 ## Define tables
@@ -82,7 +85,6 @@ def post_username():
 def post_username_message_time():
     try:
         data = request.get_json()
-        print(data)
         new_user = UserMessage(
             username = data['data']['username'],
             message = data['data']['message'],
@@ -136,8 +138,12 @@ def does_username_exist(username):
 
 @socketio.on('connect')
 def connect():
-    print(f"\t {request.sid} client has connected")
-    emit("connected", {"data": f"id: {request.sid} is connected"})
+    global clients
+    clients += 1
+    print(f"\t {request.sid} client has connected - total number of clients is now {clients}")
+    emit("connected", {
+        'user_count' : clients
+    }, broadcast=True)
 
 # data contains message and username
 @socketio.on('data')
@@ -156,14 +162,18 @@ def new_username(username):
 
 @socketio.on('disconnect')
 def disconnected():
-    print("\tuser disconnected")
-    emit("disconnect", f"user{request.sid} disconnected", broadcast=True)
+    global clients
+    clients -= 1
+    print(f"\tuser disconnected - total number of clients is now {clients}")
+    emit("disconnected", {
+        'user_count' : clients
+    }, broadcast=True)
 
 @socketio.on_error_default
 def default_error_handler(e):
     print(request.event["message"]) # "my error event"
     print(request.event["args"])    # (data,)
 
-# app.run(host=os.getenv('HOST_IP'), debug=True)
+# Backend runs locally
 if __name__ == '__main__':
     socketio.run(app, host=os.getenv('HOST_IP'), debug=True)
