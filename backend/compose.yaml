@@ -1,0 +1,16 @@
+services:
+  convo-hub-db:
+    image: postgres:16.3
+    container_name: convo-hub-db-container
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/convo-hub/data
+
+volumes:
+  pgdata:
