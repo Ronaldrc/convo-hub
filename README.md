@@ -3,6 +3,8 @@ IN-PROGRESS!
 # convo-hub
 Live chat with anyone in the world using our [website](https://convo-hub.duckdns.org)
 
+Be sure to choose a unique username!
+
 # Description
 Full stack website allowing users to chat amongst each other.
 
